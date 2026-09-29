@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>diary.exe 지원</title>
+<meta name="description" content="diary.exe: 하루 한 줄, 명령어로 쓰는 CMD 스타일 일기 앱. 사용법, 자주 묻는 질문, 문의.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<header class="bar"><span class="prompt">&gt;_</span> diary.exe <nav><a href="./" aria-current="page">지원</a><a href="privacy.html">개인정보</a></nav></header>
+
+<p class="cmd"><span class="dim">C:\diary&gt;</span> help</p>
+
+<h1>diary.exe</h1>
+<p class="lead">하루에 한 줄이면 충분해. 입력창에 한 줄 치면 끝나는 CMD 스타일 일기 앱이에요. 1년 뒤 오늘, 오늘 쓴 한 줄이 돌아와요.</p>
+
+<h2>명령어</h2>
+<table>
+<thead><tr><th scope="col">명령어</th><th scope="col">설명</th></tr></thead>
+<tbody>
+<tr><td><code>echo 퇴근길 노을</code></td><td>오늘 한 줄 저장 (80자까지). 명령어 없이 입력해도 저장돼요.</td></tr>
+<tr><td><code>edit 고친 내용</code><br><code>edit 09.28 내용</code></td><td>오늘 한 줄 고치기. 날짜를 붙이면 지난 날도 쓰거나 고칠 수 있어요.</td></tr>
+<tr><td><code>rm</code> / <code>rm 09.28</code></td><td>그날 한 줄 지우기</td></tr>
+<tr><td><code>cat 어제</code>, <code>cat --ago</code></td><td>그날 한 줄 보기 / 지난해 오늘들</td></tr>
+<tr><td><code>grep 커피</code></td><td>모든 기록에서 단어 찾기</td></tr>
+<tr><td><code>ago</code> / <code>cal</code></td><td>해마다 같은 날 모아 보기 / 달력과 연속 기록</td></tr>
+<tr><td><code>mode light</code></td><td>밝기 모드 <code>auto</code> · <code>light</code> · <code>dark</code>. auto 는 폰 설정을 따라가요.</td></tr>
+<tr><td><code>theme amber</code>, <code>crt on</code></td><td>테마 · CRT 효과 (PRO)</td></tr>
+<tr><td><code>upgrade</code> / <code>restore</code></td><td>PRO 구매 / 구매 복원</td></tr>
+</tbody>
+</table>
+
+<h2>자주 묻는 질문</h2>
+<h3>하루에 여러 줄 쓸 수는 없나요?</h3>
+<p>diary.exe 는 하루 한 줄만 남기는 앱이에요. 부담 없이 오래 쓰도록 일부러 한 줄로 제한했어요. 대신 <code>edit</code> 로 언제든 고쳐 쓸 수 있어요.</p>
+<h3>어제 쓰는 걸 깜빡했어요</h3>
+<p><code>edit 어제 내용</code> 이나 <code>edit 09.28 내용</code> 처럼 날짜를 붙이면 지난 날에도 쓸 수 있어요.</p>
+<h3>위젯에 "Access is denied." 가 떠요</h3>
+<p>홈 화면·잠금화면 위젯은 PRO 기능이에요. 앱에서 <code>upgrade</code> 를 입력해 PRO 를 열면 위젯이 바로 풀려요.</p>
+<h3>폰을 바꿨는데 PRO 가 사라졌어요</h3>
+<p>같은 Apple ID(또는 Google 계정)로 로그인한 뒤 앱에서 <code>restore</code> 를 입력하면 구매가 복원돼요.</p>
+<h3>일기를 다른 기기로 옮길 수 있나요?</h3>
+<p>아직은 안 돼요. 모든 일기는 기기 안에만 저장돼요. 내보내기는 다음 업데이트에서 준비 중이에요.</p>
+
+<h2>문의</h2>
+<p>버그 제보와 기능 제안은 <a href="https://github.com/isla0x/diary-exe/issues">GitHub 이슈</a>로 남겨 주세요.</p>
+
+<p class="cmd"><span class="dim">C:\diary&gt;</span> <span class="cursor">_</span></p>
+</main>
+</body>
+</html>
