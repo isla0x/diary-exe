@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: JBM; src: url(fonts/JetBrainsMono-Regular.ttf); font-weight: 400; }
+@font-face { font-family: JBM; src: url(fonts/JetBrainsMono-Bold.ttf); font-weight: 700; }
+@font-face { font-family: NGC; src: url(fonts/NanumGothicCoding-Regular.ttf); font-weight: 400; }
+@font-face { font-family: NGC; src: url(fonts/NanumGothicCoding-Bold.ttf); font-weight: 700; }
+@font-face { font-family: NSK; src: url(fonts/NotoSansKR.ttf); font-weight: 100 900; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #0C0C0C; overflow: hidden; }
+.mono { font-family: JBM, NGC, monospace; }
+.ko { word-spacing: -0.3em; }
+.canvas { position: relative; overflow: hidden; background: radial-gradient(120% 70% at 50% 0%, #211f16 0%, #0C0C0C 60%); }
+.cap { position: absolute; left: 0; right: 0; text-align: center; color: #F2F2F2; font-family: JBM, NGC, monospace; }
+.cap .p { color: #A3A3A3; }
+.cap .p b { color: #F9F1A5; font-weight: 400; }
+.cap .t { font-weight: 700; letter-spacing: -0.5px; word-spacing: -0.25em; }
+.cap .s { color: #A3A3A3; word-spacing: -0.25em; }
+.frame { position: absolute; background: #1b1b1b; border: 1px solid #3a3a3a; box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 0 0 2px #0a0a0a; }
+.screen { position: absolute; overflow: hidden; background: #000; }
+.app { position: absolute; left: 0; top: 0; transform-origin: top left; font-family: JBM, NGC, monospace; line-height: 1.5; display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; }
+.dash { height: 1px; background-image: linear-gradient(90deg, var(--line) 0 4px, transparent 4px 7px); background-size: 7px 1px; }
+.btn { height: 44px; padding: 0 12px; display: inline-flex; align-items: center; border: 1px solid var(--line); font-size: 13px; }
+.ls { position: absolute; inset: 0; font-family: NSK, sans-serif; color: #fff; }
+.chip { display: inline-block; padding: 6px 14px; border: 1px solid; font-size: 14px; margin: 0 5px; }
+.w { font-family: NSK, sans-serif; text-wrap: balance; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const P = {
+  cmd:   { bg:'#0C0C0C', bar:'#1A1A1A', fg:'#CCCCCC', hi:'#F2F2F2', dim:'#A3A3A3', ok:'#16C60C', tag:'#F9F1A5', cmd:'#61D6D6', warn:'#E74856', line:'#2A2A2A' },
+  light: { bg:'#F5F2E8', bar:'#E8E4D6', fg:'#2B2B2B', hi:'#111111', dim:'#6B6B6B', ok:'#0B7A0B', tag:'#7A5F00', cmd:'#0B6E8A', warn:'#C0282F', line:'#D6D1C2' },
+  phosphor: { bg:'#050A06', bar:'#0B170E', fg:'#4AF626', hi:'#B8FFA8', dim:'#2E9A1A', ok:'#B8FFA8', tag:'#E8FF7A', cmd:'#7CFFCB', warn:'#FF6B5A', line:'#16361D' },
+  amber: { bg:'#0F0A02', bar:'#1C1305', fg:'#FFB000', hi:'#FFE3A3', dim:'#B07A00', ok:'#FFE3A3', tag:'#FFD166', cmd:'#FFCF70', warn:'#FF6B3D', line:'#3A2A0A' },
+};
+const q = new URLSearchParams(location.search);
+const device = q.get('device') || 'iphone';
+const shot = q.get('shot') || '1';
+const IP = device === 'iphone';
+const C = IP ? { w:440, h:956, appW:390, appH:844, frameTop:178, screenW:350, bezel:8, rFrame:58, rScreen:50, statusH:47, homeH:34,
+                 capTop:52, pSize:13, tSize:33, sSize:14 }
+             : { w:1032, h:1376, appW:680, appH:907, frameTop:290, screenW:760, bezel:14, rFrame:40, rScreen:26, statusH:24, homeH:20,
+                 capTop:80, pSize:20, tSize:54, sSize:22 };
+if (IP && q.get('size') === '65') Object.assign(C, { w:428, h:926, frameTop:170, screenW:338, capTop:48 });
+C.screenH = Math.round(C.screenW * C.appH / C.appW);
+
+// 오늘 = 2026-09-29 (화)
+const WEEK = [
+  ['09.29 화', null, true],
+  ['09.28 월', '퇴근길 노을이 진짜 예뻤다'],
+  ['09.27 일', '드라마 정주행. 후회 없음'],
+  ['09.26 토', '떡볶이 먹고 코노 3시간'],
+  ['09.25 금', null],
+  ['09.24 목', '첫 앱을 심사에 올렸다. 떨려'],
+  ['09.23 수', '집에 우산이 벌써 다섯 개'],
+];
+const AGO = '이사 박스 아직도 다 못 풀었다';
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const promptIcon = c => `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l-3.5 3.5"/><path d="M8 12h5.5"/></svg>`;
+const returnIcon = c => `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3v6q0 2-2 2H3.5"/><path d="M7 7.5 3.5 11 7 14.5"/></svg>`;
+const cursor = (c, h=18) => `<span style="display:inline-block;width:9px;height:${h}px;background:${c};vertical-align:middle"></span>`;
+
+function statusBar(c, bg) {
+  const batt = `<svg width="${IP?26:24}" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="${c}" opacity=".5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="${c}"/><rect x="23.5" y="4" width="1.5" height="4" rx=".7" fill="${c}" opacity=".5"/></svg>`;
+  return `<div class="row" style="height:${C.statusH}px;background:${bg};padding:${IP?'14px 30px 0 36px':'0 20px'};justify-content:space-between;font-family:NSK,sans-serif;font-weight:600;font-size:${IP?16:13}px;color:${c}">
+    <span>21:41</span><span class="row" style="gap:6px">${IP?'':'<span style="font-weight:500">9월 29일 (화)</span>'}${batt}</span></div>`;
+}
+
+function titleBar(p, active, showPro) {
+  const tab = (label, on, color) => `<div class="row" style="height:44px;padding:0 10px;font-size:13px;${on?`background:${p.fg};color:${p.bg}`:`color:${color||p.dim}`}">${label}</div>`;
+  return `<div style="background:${p.bar};border-bottom:1px solid ${p.line}">${statusBar(p.hi, p.bar)}
+    <div class="row" style="height:44px;padding:0 4px 0 14px;gap:8px">${promptIcon(p.hi)}
+      <span style="font-size:13px;color:${p.hi}">diary.exe</span><span style="font-size:12px;color:${p.dim};flex:1">09.29 화</span>
+      ${showPro?tab('PRO',false,p.tag):''}${tab('ago',active==='ago')}${tab('cal',active==='cal')}</div></div>`;
+}
+
+const prompt = (p, cmd) => `<div style="font-size:14px"><span style="color:${p.dim}">C:\\diary&gt; </span><span style="color:${p.cmd}">${cmd}</span></div>`;
+
+function mainScreen(p, o) {
+  const week = WEEK.map(([d, t, today]) => {
+    let body;
+    if (t && !(today && !o.todayText)) body = `<span class="ko" style="color:${p.hi};font-size:15px">${esc(t)}</span>`;
+    else if (today && o.todayText) body = `<span class="ko" style="color:${p.hi};font-size:15px">${esc(o.todayText)}</span>`;
+    else if (today) body = `<span class="row" style="gap:8px"><span style="color:${p.tag};font-size:15px">_</span><span class="ko" style="color:${p.dim};font-size:13px">아직 안 썼어요</span></span>`;
+    else body = `<span style="color:${p.dim};opacity:.5;font-size:13px">·········</span>`;
+    return `<div style="display:flex;align-items:flex-start;min-height:44px;padding:8px 0;border-bottom:1px solid ${p.line}">
+      <span style="width:72px;flex:none;padding-top:2px;font-size:12px;color:${today?p.tag:p.dim}">${d}</span><div style="flex:1">${body}</div></div>`;
+  }).join('');
+  const colors = { cmd:p.fg, ok:p.tag, err:p.warn, info:p.dim };
+  const log = (o.log||[]).map(([k,s]) => `<div class="ko" style="font-size:13px;color:${colors[k]}">${esc(s)}</div>`).join('');
+  const chips = ['echo','edit','cat','grep','cls','help'].map(c=>`<span class="btn" style="--line:${p.line};margin-right:6px;color:${p.cmd};flex:none">${c}</span>`).join('');
+  const inputLen = o.input ? [...o.input].length : 0;
+  const input = o.input ? `<span class="ko" style="color:${p.hi};font-size:16px;white-space:nowrap">${esc(o.input)}</span>${cursor(p.tag)}`
+                        : `<span class="ko" style="color:${p.dim};font-size:16px">${o.todayText?'edit 로 고쳐 쓰기':'오늘 한 줄'}</span>`;
+  const streak = o.todayText ? 4 : 3;
+  return `<div class="app" style="width:${C.appW}px;height:${C.appH}px;background:${p.bg};color:${p.fg}">
+    ${titleBar(p, null, o.showPro)}
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 0">
+      <div style="color:${p.hi};font-size:14px">DIARY [Version 1.0.0]</div>
+      <div class="ko" style="color:${p.dim};font-size:13px">(c) 채은. 하루에 한 줄이면 충분해.</div>
+      <div style="margin-top:16px">${prompt(p,'cat --ago')}</div>
+      <div style="margin-top:6px;padding:10px 12px;border:1px solid ${p.tag}5a">
+        <div style="font-size:12px;color:${p.tag}">1년 전 오늘 · 2025.09.29 월</div>
+        <div class="ko" style="font-size:15px;color:${p.hi}">${AGO}</div></div>
+      <div style="margin-top:16px">${prompt(p,'type week.txt')}</div>
+      <div style="margin-top:4px">${week}</div>
+      <div class="row" style="margin-top:12px;gap:10px;font-size:13px"><span style="color:${p.dim}">연속</span><span style="color:${p.tag}">${'■'.repeat(streak)}${'□'.repeat(7-streak)}</span><span style="color:${p.hi}">${streak}일</span><span style="color:${p.dim}">· 9월 ${o.todayText?25:24}줄</span></div>
+      <div style="flex:1"></div>
+      <div style="min-height:64px;padding:8px 0;display:flex;flex-direction:column;justify-content:flex-end">${log}</div>
+    </div>
+    <div style="background:${p.bar};border-top:1px solid ${p.line};padding:8px 12px ${12+C.homeH}px">
+      <div class="row" style="overflow:hidden">${chips}</div>
+      <div class="row" style="margin-top:8px;height:50px;border:1px solid ${p.line};background:${p.bg};padding:0 2px 0 12px;gap:8px">
+        <span style="color:${p.hi};font-size:14px">C:\\diary&gt;</span><div class="row" style="flex:1;min-width:0;overflow:hidden">${input}</div>
+        <span style="font-size:11px;color:${p.dim}">${inputLen}/80</span>
+        <div class="row" style="width:44px;height:44px;justify-content:center">${returnIcon(p.tag)}</div></div>
+    </div></div>`;
+}
+
+function agoScreen(p) {
+  const years = [
+    ['2026','오늘 · 화',null,true],
+    ['2025','1년 전 · 월',AGO],
+    ['2024','2년 전 · 일','추석 연휴 끝. 내일 출근하기 싫다'],
+    ['2023','3년 전 · 금','혼자 제주도. 바람이 너무 불어서 모자 날아감'],
+  ];
+  const yr = years.map(([y,sub,t,cur],i) => `<div style="display:flex;gap:10px">
+      <div style="width:48px;flex:none;display:flex;flex-direction:column;align-items:center"><span style="font-weight:700;font-size:14px;color:${cur?p.tag:p.hi}">${y}</span>${i<years.length-1?`<span style="flex:1;width:1px;background:${p.line}"></span>`:''}</div>
+      <div style="flex:1;padding-bottom:${i<years.length-1?14:0}px"><div style="font-size:12px;color:${p.dim}">${sub}</div>
+        ${t?`<div class="ko" style="font-size:15px;color:${p.hi}">${esc(t)}</div>`:`<div class="row" style="gap:8px"><span style="color:${p.tag};font-size:15px">_</span><span class="ko" style="font-size:13px;color:${p.dim}">아직 안 썼어요</span></div>`}</div></div>`).join('');
+  const hits = [['2026.09.22','새로 생긴 카페 라떼 맛있음. 또 가야지','카페'],['2026.08.21','회사 앞 카페 사장님이 이름 외워주심','카페'],['2026.08.09','비 오는 날 창가 자리, 카페에서 두 시간','카페'],['2026.06.14','동네 카페 투어 세 군데. 배불러','카페'],['2025.11.02','카페에서 자격증 공부 5시간','카페']];
+  const hl = (t,w) => { const i=t.indexOf(w); return esc(t.slice(0,i))+`<span style="color:${p.bg};background:${p.tag}">${w}</span>`+esc(t.slice(i+w.length)); };
+  const hitRows = (IP?hits.slice(0,4):hits).map(([d,t,w]) => `<div style="display:flex;margin-bottom:8px"><span style="width:92px;flex:none;padding-top:2px;font-size:12px;color:${p.dim}">${d}</span><span class="ko" style="font-size:14px;color:${p.hi}">${hl(t,w)}</span></div>`).join('');
+  return `<div class="app" style="width:${C.appW}px;height:${C.appH}px;background:${p.bg};color:${p.fg}">
+    ${titleBar(p,'ago',false)}
+    <div style="flex:1;padding:14px 16px 16px;overflow:hidden">
+      ${prompt(p,'cat --ago')}
+      <div class="ko" style="font-size:13px;color:${p.dim}">9월 29일, 해마다 남긴 한 줄</div>
+      <div style="margin-top:12px">${yr}</div>
+      <div class="dash" style="--line:${p.line};margin-top:20px"></div>
+      <div class="row" style="margin-top:14px;height:48px;border:1px solid ${p.fg};padding:0 12px;gap:0">
+        <span style="font-size:14px;color:${p.cmd}">C:\\diary&gt; grep&nbsp;</span><span style="font-size:16px;color:${p.hi}">카페</span>${cursor(p.tag)}</div>
+      <div style="margin-top:10px;font-size:12px;color:${p.dim}">${IP?4:5}줄 찾음</div>
+      <div style="margin-top:6px">${hitRows}</div>
+    </div>
+    <div style="padding:8px 16px ${16+C.homeH}px"><div class="row" style="height:52px;border:1px solid ${p.fg};justify-content:center;gap:12px;font-size:15px"><span style="color:${p.dim}">[ ESC ]</span><span style="color:${p.hi}">오늘로</span></div></div>
+  </div>`;
+}
+
+function calScreen(p) {
+  const missing = [4,10,17,25];
+  const cells = [];
+  for (let i=0;i<1;i++) cells.push(null); // 2026-09-01 은 화요일 → 월요일 칸 하나 비움
+  for (let d=1; d<=30; d++) cells.push(d);
+  while (cells.length%7) cells.push(null);
+  const cell = d => {
+    if (!d) return `<div style="flex:1;height:46px"></div>`;
+    const future = d>29, today = d===29, has = !future && !today && !missing.includes(d), sel = d===24;
+    const mark = future?'&nbsp;':today?'□':has?'■':'·';
+    const mc = has?p.tag:today?p.hi:p.dim;
+    return `<div style="flex:1;height:46px;margin:1px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;${sel?`background:${p.tag}1c;border:1px solid ${p.tag}`:today?`border:1px solid ${p.dim}`:'border:1px solid transparent'}">
+      <span style="font-size:12px;color:${future?p.line:today?p.hi:p.fg}">${d}</span><span style="font-size:12px;color:${mc};${!has&&!today?'opacity:.5':''}">${mark}</span></div>`;
+  };
+  let grid = '';
+  for (let r=0;r<cells.length/7;r++) grid += `<div class="row">${cells.slice(r*7,r*7+7).map(cell).join('')}</div>`;
+  const months = [18,21,25,19,27,23,26,29,25];
+  const bar = v => '█'.repeat(Math.round(v*16/29))+'░'.repeat(16-Math.round(v*16/29));
+  const kv = (k,v,x,xc) => `<div class="row" style="padding:1px 0;font-size:14px"><span style="width:88px;color:${p.dim}">${k}</span><span style="color:${p.hi}">${v}</span>${x?`<span style="margin-left:10px;color:${xc||p.dim}">${x}</span>`:''}</div>`;
+  return `<div class="app" style="width:${C.appW}px;height:${C.appH}px;background:${p.bg};color:${p.fg}">
+    ${titleBar(p,'cal',false)}
+    <div style="flex:1;padding:14px 16px 16px;overflow:hidden">
+      ${prompt(p,'cal 2026-09')}
+      <div style="margin-top:12px;padding:12px 14px;border:1px solid ${p.line}">
+        ${kv('9월','25 / 29일','86%',p.tag)}${kv('연속 기록','3일','최고 11일')}${kv('전체','412줄','평균 21자')}</div>
+      <div class="row" style="margin-top:14px;height:44px"><span style="width:44px;text-align:center;font-size:13px;color:${p.fg}">◀</span><span style="flex:1;text-align:center;font-size:14px;color:${p.hi}">2026 · 09</span><span style="width:44px;text-align:center;font-size:13px;color:${p.line}">▶</span></div>
+      <div class="row" style="font-size:12px;color:${p.dim}">${'월화수목금토일'.split('').map(d=>`<span style="flex:1;text-align:center">${d}</span>`).join('')}</div>
+      <div style="margin-top:4px">${grid}</div>
+      <div style="margin-top:8px;font-size:12px;color:${p.dim}"><span style="color:${p.tag}">■</span> 씀 &nbsp; · 안 씀 &nbsp; <span style="color:${p.hi}">□</span> 오늘</div>
+      <div style="margin-top:10px;padding:8px 4px 8px 12px;background:${p.bar};border:1px solid ${p.line};display:flex;align-items:center">
+        <div style="flex:1"><div style="font-size:12px;color:${p.dim}">09.24 목</div><div class="ko" style="font-size:15px;color:${p.hi}">첫 앱을 심사에 올렸다. 떨려</div></div>
+        <span class="btn" style="--line:${p.line};color:${p.cmd}">고쳐 쓰기</span></div>
+      ${IP?'':`<div style="margin:20px 0 6px;color:${p.hi};font-size:14px">2026 · 월별 줄 수</div>
+      ${months.map((v,i)=>[v,i]).slice(-4).map(([v,i])=>`<div class="row" style="font-size:13px;margin-bottom:2px"><span style="width:44px;color:${p.dim}">${i+1}월</span><span style="color:${p.tag}">${bar(v)}</span><span style="margin-left:10px">${v}</span></div>`).join('')}`}
+    </div>
+    <div style="padding:8px 16px ${16+C.homeH}px"><div class="row" style="height:52px;border:1px solid ${p.fg};justify-content:center;gap:12px;font-size:15px"><span style="color:${p.dim}">[ ESC ]</span><span style="color:${p.hi}">오늘로</span></div></div>
+  </div>`;
+}
+
+function proScreen(p) {
+  const f = [['테마 3종','cmd · phosphor · amber'],['홈 화면 위젯','오늘 한 줄 · 1년 전 오늘'],['잠금화면 위젯','1년 전 오늘 · 연속 기록'],['CRT 효과','옛날 모니터 주사선'],['앞으로 나올 PRO 기능','내보내기 · 잠금 등, 추가 결제 없이']];
+  const sw = t => `<div style="flex:1;height:72px;padding:8px;background:${t.bg};border:1px solid ${t.line};display:flex;flex-direction:column;font-size:11px"><span style="color:${t.hi}">${t===P.cmd?'cmd':t===P.phosphor?'phosphor':'amber'}</span><span style="flex:1"></span><span style="color:${t.tag}">■ 한 줄</span><span style="color:${t.fg}">C:\\&gt;_</span></div>`;
+  return `<div class="app" style="width:${C.appW}px;height:${C.appH}px;background:${p.bg};color:${p.fg}">
+    ${titleBar(p,null,false).replace(/<div class="row" style="height:44px;padding:0 10px[^>]*>(ago|cal)<\/div>/g,'')}
+    <div style="flex:1;padding:14px 16px 16px;overflow:hidden">
+      ${prompt(p,'upgrade')}
+      <div style="margin-top:14px;font-size:22px;font-weight:700;color:${p.hi}">diary.exe PRO</div>
+      <div class="ko" style="font-size:13px;color:${p.dim}">한 번 결제, 계속 사용</div>
+      <div class="row" style="gap:8px;margin-top:16px">${sw(P.cmd)}${sw(P.phosphor)}${sw(P.amber)}</div>
+      <div class="dash" style="--line:${p.line};margin-top:16px"></div>
+      <div style="margin-top:8px">${f.map(([a,b])=>`<div style="display:flex;gap:10px;padding:5px 0"><span style="color:${p.tag};font-size:14px">[+]</span><div><div class="ko" style="color:${p.hi};font-size:14px">${a}</div><div class="ko" style="color:${p.dim};font-size:13px">${b}</div></div></div>`).join('')}</div>
+      <div class="dash" style="--line:${p.line};margin-top:8px"></div>
+      <div class="ko" style="margin-top:14px;font-size:13px;color:${p.fg}">가격 ₩3,900 · 한 번만 결제</div>
+      <div class="ko" style="font-size:13px;color:${p.dim}">같은 Apple ID 로는 다른 기기에서도 복원할 수 있어요.</div>
+    </div>
+    <div style="padding:8px 16px ${16+C.homeH}px">
+      <div class="row" style="height:52px;border:1px solid ${p.fg};justify-content:center;gap:12px;font-size:15px"><span style="color:${p.dim}">[ ENTER ]</span><span style="color:${p.hi}">₩3,900 구매하기</span></div>
+      <div class="row" style="gap:8px;margin-top:8px"><span class="btn" style="--line:${p.line};flex:1;justify-content:center;color:${p.cmd}">구매 복원</span><span class="btn" style="--line:${p.line};flex:1;justify-content:center;color:${p.fg}">[ ESC ] 닫기</span></div>
+    </div>
+  </div>`;
+}
+
+// ---- iOS 위젯 (Swift 코드와 같은 모양) ----
+const strip = (p, trailing) => `<div class="row mono" style="height:26px;background:${p.bar};padding:0 12px;gap:6px;font-size:11px;color:${p.hi}"><b>&gt;_</b><span style="flex:1">diary.exe</span>${trailing?`<span style="font-size:10px;color:${p.dim}">${trailing}</span>`:''}</div>`;
+function smallWidget(p, text) {
+  return `<div style="width:158px;height:158px;border-radius:22px;overflow:hidden;background:${p.bg};display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.35)">
+    ${strip(p)}
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px;padding:8px 12px 10px">
+      <div class="mono" style="font-size:11px;color:${p.tag}">09.29 화</div>
+      ${text?`<div class="w" style="font-size:14px;font-weight:500;color:${p.hi};line-height:1.3">${esc(text)}</div>`
+            :`<div class="mono" style="font-size:13px;color:${p.hi}">C:\\diary&gt;<span style="color:${p.tag}">_</span></div><div class="w" style="font-size:12px;color:${p.dim}">오늘 한 줄, 아직이에요</div>`}
+      <div style="flex:1"></div>
+      <div class="mono" style="font-size:10px;white-space:nowrap"><span style="color:${p.tag}">${text?'■■■■□□□':'■■■□□□□'}</span><span style="color:${p.dim}"> 연속 ${text?4:3}일</span></div>
+    </div></div>`;
+}
+function mediumWidget(p) {
+  const wk = [1,0,-1,-1,-1,-1,-1];
+  return `<div style="width:338px;height:158px;border-radius:22px;overflow:hidden;background:${p.bg};display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.35)">
+    ${strip(p,'cat --ago')}
+    <div style="flex:1;display:flex;gap:12px;padding:10px 14px 12px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div class="mono" style="font-size:10px;color:${p.tag}">1년 전 오늘 · 2025</div>
+        <div class="w" style="font-size:15px;font-weight:500;color:${p.hi};line-height:1.3">${AGO}</div>
+        <div style="flex:1"></div>
+        <div class="row" style="gap:4px"><span class="mono" style="font-size:11px;color:${p.hi}">C:\\diary&gt;<span style="color:${p.tag}">_</span></span><span class="w" style="font-size:11px;color:${p.dim}">오늘은?</span></div>
+      </div>
+      <div style="width:1px;background:${p.line}"></div>
+      <div style="width:100px;display:flex;flex-direction:column;gap:4px">
+        <div class="w" style="font-size:10px;color:${p.dim}">이번 주</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">
+          ${'월화수목금토일'.split('').map(d=>`<span class="w" style="font-size:9px;color:${p.dim}">${d}</span>`).join('')}
+          ${wk.map(v=>`<span class="mono" style="font-size:10px;color:${v>0?p.tag:p.dim}">${v>0?'■':v===0?'·':'&nbsp;'}</span>`).join('')}
+        </div>
+        <div style="flex:1"></div>
+        <div class="w" style="font-size:11px;color:${p.hi}">연속 <span style="color:${p.tag}">3</span>일</div>
+        <div class="w" style="font-size:10px;color:${p.dim}">9월 24줄</div>
+      </div>
+    </div></div>`;
+}
+
+function wallpaper() {
+  return `background: radial-gradient(90% 60% at 25% 15%, #3b3420 0%, transparent 60%), radial-gradient(80% 60% at 85% 80%, #1f2a3e 0%, transparent 60%), linear-gradient(180deg,#14120d,#07090b);`;
+}
+
+function lockScreen() {
+  const s = IP ? 1 : 1.6;
+  const rect = `<div style="width:${170*s}px;height:${72*s}px;padding:${8*s}px ${10*s}px;border-radius:${18*s}px;background:rgba(255,255,255,.14);color:#fff;line-height:1.35;text-align:left">
+      <div style="font-size:${11*s}px;opacity:.75">1년 전 오늘</div><div style="font-size:${13*s}px;font-weight:700;text-wrap:balance">${AGO}</div></div>`;
+  const circ = `<div style="width:${72*s}px;height:${72*s}px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1">
+      <span class="mono" style="font-size:${10*s}px">_</span><span class="mono" style="font-size:${20*s}px;font-weight:700">3</span><span style="font-size:${9*s}px;opacity:.75">일째</span></div>`;
+  return `<div class="ls" style="${wallpaper()}">
+    ${statusBar('#fff','transparent')}
+    <div style="text-align:center;margin-top:${IP?34:110}px">
+      <div style="font-size:${IP?19:26}px;font-weight:500;opacity:.9">9월 29일 화 <span class="mono" style="font-size:${IP?15:22}px;opacity:.95">&nbsp;&gt;_ 연속 3일 · 오늘 아직</span></div>
+      <div style="font-size:${IP?96:150}px;font-weight:600;line-height:1.05;letter-spacing:-2px;margin-top:2px">21:41</div>
+      <div class="row" style="justify-content:center;gap:${IP?12:18}px;margin-top:${IP?14:22}px">${rect}${circ}</div>
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:${IP?44:40}px;display:flex;justify-content:space-between;padding:0 ${IP?46:70}px">
+      ${[0,1].map(()=>`<div style="width:${IP?50:60}px;height:${IP?50:60}px;border-radius:50%;background:rgba(255,255,255,.14)"></div>`).join('')}</div>
+    <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:${IP?140:200}px;height:5px;border-radius:3px;background:#fff"></div>
+  </div>`;
+}
+
+function homeScreen() {
+  const icon = (i) => { const cols = ['#2c3a4a','#3a2f45','#2f4038','#4a3a2c','#353535','#2a3f48','#43303a','#3b4030']; return `<div style="width:62px;height:62px;border-radius:15px;background:${cols[i%cols.length]}"></div>`; };
+  const app = (src, name) => `<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><img src="${src}" style="width:62px;height:62px;border-radius:15px"><span style="font-size:12px;color:#fff">${name}</span></div>`;
+  const cell = (i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">${icon(i)}<span style="height:17px"></span></div>`;
+  if (IP) {
+    return `<div class="ls" style="${wallpaper()}">${statusBar('#fff','transparent')}
+      <div style="padding:14px 26px 0">${mediumWidget(P.cmd)}
+        <div style="display:grid;grid-template-columns:158px repeat(2,1fr);gap:22px 18px;margin-top:24px;align-items:start">
+          <div style="grid-row:span 2">${smallWidget(P.light,'점심에 먹은 국밥이 인생 국밥이었다')}</div>${app('icon.png','diary.exe')}${app('todo-icon.png','todo.exe')}${cell(2)}${cell(3)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:22px 18px;margin-top:22px">${[4,5,6,7,0,1,2,3].map(cell).join('')}</div>
+      </div>
+      <div style="position:absolute;left:14px;right:14px;bottom:26px;height:92px;border-radius:32px;background:rgba(255,255,255,.14);display:flex;justify-content:space-around;align-items:center">${[5,6,7,0].map(icon).join('')}</div>
+      <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:3px;background:#fff"></div></div>`;
+  }
+  return `<div class="ls" style="${wallpaper()}">${statusBar('#fff','transparent')}
+    <div style="padding:36px 40px 0">
+      <div class="row" style="gap:28px;align-items:flex-start;zoom:1.3">${mediumWidget(P.cmd)}${smallWidget(P.light,'점심에 먹은 국밥이 인생 국밥이었다')}</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:34px 24px;margin-top:40px;zoom:1.15">${app('icon.png','diary.exe')}${app('todo-icon.png','todo.exe')}${[2,3,4,5,6,7,0,1,2,3,4,5].map(cell).join('')}</div>
+    </div>
+    <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:24px;height:96px;padding:0 24px;border-radius:32px;background:rgba(255,255,255,.14);display:flex;gap:24px;align-items:center">${[5,6,7,0,1,2].map(icon).join('')}</div>
+  </div>`;
+}
+
+const SHOTS = {
+  1: { t:'하루에 한 줄이면 충분해', s:'입력창에 치고 Enter · 80자까지', body:()=>mainScreen(P.cmd,{showPro:true, input:'점심 국밥이 인생 국밥', log:[['info','그냥 입력하면 오늘 한 줄로 저장돼요.']]}) },
+  2: { t:'1년 전 오늘이 돌아와요', s:'잠금화면 위젯 · PRO', body:lockScreen, bare:true },
+  3: { t:'해마다 같은 날, 한 줄씩', s:'cat --ago · grep 으로 지난 기록 찾기', body:()=>agoScreen(P.light) },
+  4: { t:'홈 화면에도 오늘 한 줄', s:'작게 · 중간 위젯 · PRO', body:homeScreen, bare:true },
+  5: { t:'쓴 날은 ■, 연속 기록', s:'cal 로 보는 한 달', body:()=>calScreen(P.cmd) },
+  6: { t:'테마 3종 + 라이트 모드', s:'', chips:true, body:()=>mainScreen(P.amber,{showPro:false, todayText:'점심 국밥이 인생 국밥이었다', log:[['cmd','C:\\diary> theme amber'],['ok','테마 변경: amber']]}) },
+  pro: { body:()=>proScreen(P.cmd), full:true },
+};
+
+const S = SHOTS[shot];
+const scale = C.screenW / C.appW;
+if (S.full) {
+  document.getElementById('root').innerHTML = `<div style="position:relative;width:${C.w}px;height:${C.h}px;overflow:hidden">${S.body().replace('class="app" style="', `class="app" style="transform:scale(${C.w/C.appW});`)}</div>`;
+} else {
+  const frameW = C.screenW + C.bezel*2, frameH = C.screenH + C.bezel*2;
+  const chips = S.chips ? `<div style="margin-top:${IP?12:18}px;font-size:${IP?14:20}px">${[['cmd',P.cmd],['phosphor',P.phosphor],['amber',P.amber],['light',P.light]].map(([n,p])=>`<span class="chip" style="background:${p.bg};color:${p.hi};border-color:${p.line}">${n}</span>`).join('')}</div>` : '';
+  const inner = S.bare
+    ? `<div style="position:absolute;left:0;top:0;width:${C.appW}px;height:${C.appH}px;transform:scale(${scale});transform-origin:top left">${S.body()}</div>`
+    : S.body().replace('class="app" style="', `class="app" style="transform:scale(${scale});`);
+  document.getElementById('root').innerHTML = `
+  <div class="canvas" style="width:${C.w}px;height:${C.h}px">
+    <div class="cap" style="top:${C.capTop}px">
+      <div class="p" style="font-size:${C.pSize}px"><b>&gt;_</b> C:\\diary&gt;</div>
+      <div class="t" style="font-size:${C.tSize}px;margin-top:${IP?8:12}px">${S.t}</div>
+      ${S.s?`<div class="s" style="font-size:${C.sSize}px;margin-top:${IP?8:12}px">${S.s}</div>`:''}${chips}
+    </div>
+    <div class="frame" style="left:${(C.w-frameW)/2}px;top:${C.frameTop}px;width:${frameW}px;height:${frameH}px;border-radius:${C.rFrame}px">
+      <div class="screen" style="left:${C.bezel}px;top:${C.bezel}px;width:${C.screenW}px;height:${C.screenH}px;border-radius:${C.rScreen}px">${inner}</div>
+    </div>
+  </div>`;
+}
+</script>
+</body>
+</html>
