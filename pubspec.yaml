@@ -1,7 +1,7 @@
 name: diary_exe
 description: "diary.exe — 하루 한 줄, Windows cmd 느낌의 명령어 입력형 일기 앱"
 publish_to: "none"
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.5.0
