@@ -152,7 +152,7 @@ class _CalScreenState extends State<CalScreen> {
                               Text(shortDate(_selected), style: termStyle(p.dim, size: 12)),
                               Text(
                                 selectedText ?? (_selected == today ? '아직 안 썼어요' : '(기록 없음)'),
-                                style: termStyle(selectedText == null ? p.dim : p.hi, size: 15, ko: true),
+                                style: termStyle(selectedText == null ? p.dim : p.hi, size: 14, ko: true),
                               ),
                             ],
                           ),

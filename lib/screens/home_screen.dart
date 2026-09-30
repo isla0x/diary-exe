@@ -372,7 +372,7 @@ class _AgoBox extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('$years년 전 오늘 · ${longDate(first.day)}', style: termStyle(p.tag, size: 12)),
-                    Text(first.text, style: termStyle(p.hi, size: 15, ko: true)),
+                    Text(first.text, style: termStyle(p.hi, size: 14, ko: true)),
                   ],
                 ),
         ),
@@ -402,11 +402,11 @@ class _DayRow extends StatelessWidget {
     final p = palette;
     final Widget body;
     if (text != null) {
-      body = Text(text!, style: termStyle(p.hi, size: 15, ko: true));
+      body = Text(text!, style: termStyle(p.hi, size: 14, ko: true));
     } else if (isToday) {
       body = Row(
         children: [
-          BlinkingCursor(style: termStyle(p.tag, size: 15)),
+          BlinkingCursor(style: termStyle(p.tag, size: 14)),
           const SizedBox(width: 8),
           Text('아직 안 썼어요', style: termStyle(p.dim, size: 13, ko: true)),
         ],

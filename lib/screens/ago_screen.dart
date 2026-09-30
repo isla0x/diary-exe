@@ -240,11 +240,11 @@ class _YearRow extends StatelessWidget {
                 children: [
                   Text(sub, style: termStyle(p.dim, size: 12)),
                   if (text != null)
-                    Text(text!, style: termStyle(p.hi, size: 15, ko: true))
+                    Text(text!, style: termStyle(p.hi, size: 14, ko: true))
                   else
                     Row(
                       children: [
-                        BlinkingCursor(style: termStyle(p.tag, size: 15)),
+                        BlinkingCursor(style: termStyle(p.tag, size: 14)),
                         const SizedBox(width: 8),
                         Flexible(child: Text('아직 안 썼어요', style: termStyle(p.dim, size: 13, ko: true))),
                       ],

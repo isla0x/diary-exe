@@ -231,9 +231,9 @@ private func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
     .system(size: size, weight: weight, design: .monospaced)
 }
 
-/// 한글 본문: 고정폭은 한글 사이가 너무 벌어져서 기본 글꼴을 쓴다.
+/// 한글 본문. todo.exe 위젯과 같은 글꼴 · 크기로 맞춘다 (작게 11 · 중간 12).
 private func prose(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-    .system(size: size, weight: weight)
+    .system(size: size, weight: weight, design: .monospaced)
 }
 
 // MARK: - 타임라인
@@ -308,12 +308,12 @@ struct SmallView: View {
         VStack(alignment: .leading, spacing: 0) {
             TitleStrip(c: c)
             VStack(alignment: .leading, spacing: 4) {
-                Text(shortDate(day.date)).font(mono(11)).foregroundColor(c.tag)
+                Text(shortDate(day.date)).font(mono(10)).foregroundColor(c.tag)
                 if let text = day.today {
-                    Text(text).font(prose(14, .medium)).foregroundColor(c.hi).lineLimit(4)
+                    Text(text).font(prose(11)).foregroundColor(c.hi).lineLimit(5)
                 } else {
-                    PromptLine(c: c)
-                    Text("오늘 한 줄, 아직이에요").font(prose(12)).foregroundColor(c.dim).lineLimit(2)
+                    PromptLine(c: c, size: 11)
+                    Text("오늘 한 줄, 아직이에요").font(prose(11)).foregroundColor(c.dim).lineLimit(2)
                 }
                 Spacer(minLength: 0)
                 (Text(streakBar(day.streak)).foregroundColor(c.tag) + Text(" 연속 \(day.streak)일").foregroundColor(c.dim))
@@ -338,14 +338,14 @@ struct MediumView: View {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     if let ago = day.ago {
-                        Text("\(day.agoYears)년 전 오늘 · \(String(ago.y))").font(mono(10)).foregroundColor(c.tag)
-                        Text(ago.t).font(prose(15, .medium)).foregroundColor(c.hi).lineLimit(3)
+                        Text("\(day.agoYears)년 전 오늘 · \(String(ago.y))").font(mono(11)).foregroundColor(c.tag)
+                        Text(ago.t).font(prose(12)).foregroundColor(c.hi).lineLimit(3)
                     } else if let text = day.today {
-                        Text("오늘 · \(shortDate(day.date))").font(mono(10)).foregroundColor(c.tag)
-                        Text(text).font(prose(15, .medium)).foregroundColor(c.hi).lineLimit(3)
+                        Text("오늘 · \(shortDate(day.date))").font(mono(11)).foregroundColor(c.tag)
+                        Text(text).font(prose(12)).foregroundColor(c.hi).lineLimit(3)
                     } else {
-                        Text(shortDate(day.date)).font(mono(10)).foregroundColor(c.tag)
-                        Text("하루에 한 줄이면 충분해.").font(prose(14)).foregroundColor(c.hi).lineLimit(2)
+                        Text(shortDate(day.date)).font(mono(11)).foregroundColor(c.tag)
+                        Text("하루에 한 줄이면 충분해.").font(prose(12)).foregroundColor(c.hi).lineLimit(2)
                     }
                     Spacer(minLength: 0)
                     if day.written {
