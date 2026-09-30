@@ -407,41 +407,49 @@ struct WeekGrid: View {
 
 // MARK: - 잠금화면 위젯
 
-/// 직사각형: 1년 전 오늘이 있으면 그것, 없으면 오늘 상태.
+/// 직사각형: 3줄 터미널 (todo.exe 와 같은 모양)
+///   C:\diary> 연속 3일
+///   > 오늘 쓴 한 줄 (또는 "오늘 한 줄, 아직")
+///   > 1년 전 · 그날 한 줄 (없으면 이번 달 기록 수)
 struct LockRectView: View {
     let day: DayView
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
+            Text("C:\\diary> 연속 \(day.streak)일")
+                .font(mono(13, .bold))
+                .widgetAccentable()
+            Text("> " + (day.today ?? "오늘 한 줄, 아직"))
+                .font(mono(12))
+                .lineLimit(1)
             if let ago = day.ago {
-                Text("\(day.agoYears)년 전 오늘").font(prose(11)).opacity(0.75)
-                Text(ago.t).font(prose(13, .semibold)).lineLimit(2).widgetAccentable()
-            } else if let text = day.today {
-                Text("C:\\diary> 오늘").font(mono(11)).opacity(0.75)
-                Text(text).font(prose(13, .semibold)).lineLimit(2).widgetAccentable()
+                Text("> \(day.agoYears)년 전 · " + ago.t)
+                    .font(mono(12))
+                    .lineLimit(1)
             } else {
-                Text("C:\\diary>_").font(mono(13, .bold)).widgetAccentable()
-                Text("오늘 한 줄, 아직").font(prose(12))
-                Text("연속 \(day.streak)일").font(prose(11)).opacity(0.75)
+                Text("> \(Calendar.current.component(.month, from: day.date))월 \(day.month)줄")
+                    .font(mono(12))
+                    .lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-/// 원형: 연속 기록 일수
+/// 원형: 연속 일수 + 이번 주 쓴 날 링 (todo.exe 와 같은 모양)
 struct LockCircleView: View {
     let day: DayView
 
+    private var writtenThisWeek: Int { day.week.filter { $0 > 0 }.count }
+
     var body: some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            VStack(spacing: 0) {
-                Text(day.written ? ">_" : "_").font(mono(10))
-                Text("\(day.streak)").font(mono(20, .bold)).widgetAccentable()
-                Text("일째").font(prose(9)).opacity(0.75)
-            }
+        Gauge(value: Double(writtenThisWeek), in: 0...7) {
+            Text(">_").font(mono(10))
+        } currentValueLabel: {
+            Text("\(day.streak)").font(mono(18, .bold))
         }
+        .gaugeStyle(.accessoryCircularCapacity)
+        .widgetAccentable()
     }
 }
 
