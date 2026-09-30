@@ -19,7 +19,7 @@ const _entries = <(String, String, String, String?)>[
   ('theme', '[cmd | phosphor | amber]', '색 테마 변경. phosphor · amber 는 PRO.', 'theme amber'),
   ('mode', '[auto | light | dark]', '밝기 모드. auto 는 폰 설정을 따라가요. (cmd 테마)', 'mode light'),
   ('crt', '[on | off]', '옛날 모니터 같은 주사선 효과. (PRO)', null),
-  ('upgrade', '', 'PRO 소개와 구매. 테마 · 위젯 · CRT 를 한 번 결제로 열어요.', null),
+  ('upgrade', '', 'PRO 소개와 구매. 테마 · CRT · 위젯(iPhone)을 한 번 결제로 열어요.', null),
   ('restore', '', '예전에 산 PRO 를 다시 불러와요. (기기 변경, 재설치)', null),
 ];
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../pro/pro_controller.dart';
@@ -11,7 +12,15 @@ class ProScreen extends StatelessWidget {
 
   final DiaryStore store;
 
-  static const _features = [
+  /// 위젯은 iOS 에만 있다 (안드로이드는 테마 · CRT 만).
+  static bool get _hasWidgets => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  static List<(String, String)> get _features => [
+        for (final f in _allFeatures)
+          if (_hasWidgets || !f.$1.contains('위젯')) f,
+      ];
+
+  static const _allFeatures = [
     ('테마 3종', 'cmd · phosphor · amber'),
     ('홈 화면 위젯', '오늘 한 줄 · 1년 전 오늘'),
     ('잠금화면 위젯', '1년 전 오늘 · 연속 기록'),
@@ -148,7 +157,7 @@ class ProScreen extends StatelessWidget {
         _tip(p, 'theme amber', '테마 바꾸기'),
         _tip(p, 'crt on', '주사선 효과'),
         const SizedBox(height: 6),
-        Text('위젯: 홈 화면 길게 누르기 → + → diary.exe', style: termStyle(p.dim, size: 13)),
+        if (_hasWidgets) Text('위젯: 홈 화면 길게 누르기 → + → diary.exe', style: termStyle(p.dim, size: 13)),
       ];
 
   List<Widget> _buyInfo(TermPalette p, ProController? pro) {
