@@ -1,7 +1,7 @@
 name: diary_exe
 description: "diary.exe — 하루 한 줄, Windows cmd 느낌의 명령어 입력형 일기 앱"
 publish_to: "none"
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.5.0
@@ -25,7 +25,7 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   android: "ic_launcher"
-  adaptive_icon_background: "#0C0C0C"
+  adaptive_icon_background: "#191918"
   adaptive_icon_foreground: "assets/icon/icon-foreground.png"
 
 flutter:
