@@ -115,7 +115,7 @@ class _BootScreenState extends State<BootScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              Text('DIARY [Version 1.0.0]', style: termStyle(p.hi)),
+                              Text('DIARY [Version 1.0.1]', style: termStyle(p.hi)),
                               Text('하루에 한 줄이면 충분해.', style: termStyle(p.dim, size: 13, ko: true)),
                               const SizedBox(height: 32),
                               Text.rich(TextSpan(children: [

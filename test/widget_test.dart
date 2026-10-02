@@ -66,7 +66,7 @@ void main() {
     await tester.tap(find.text('grep'));
     await tester.pump();
     expect(tester.testTextInput.isVisible, isTrue);
-    await tester.tap(find.text('DIARY [Version 1.0.0]'));
+    await tester.tap(find.text('DIARY [Version 1.0.1]'));
     await tester.pump();
     expect(tester.testTextInput.isVisible, isFalse);
   });

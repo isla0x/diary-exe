@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.only(top: 14, bottom: 8),
                           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                           children: [
-                            Text('DIARY [Version 1.0.0]', style: termStyle(p.hi)),
+                            Text('DIARY [Version 1.0.1]', style: termStyle(p.hi)),
                             Text('하루에 한 줄이면 충분해.', style: termStyle(p.dim, size: 13, ko: true)),
                             const SizedBox(height: 16),
                             _prompt(p, 'cat --ago'),
